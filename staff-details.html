@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Персонал</title>
+<link rel="stylesheet" href="style.css?v=105" />
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Персонал</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Персонал</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+      <button id="filterToggle" class="btn-icon" aria-label="Фильтры">☰ Фильтры</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <div class="period-toggle-bar">
+    <span class="period-toggle-label">Период</span>
+    <div class="period-toggle" id="periodToggle"></div>
+  </div>
+
+  <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+  <div id="errorBanner" class="error-banner" hidden></div>
+
+  <aside id="filterPanel" class="filters">
+    <div class="filter-group">
+      <label for="filterObject">Объект</label>
+      <select id="filterObject"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterMine">Шахта</label>
+      <select id="filterMine"><option value="">Все</option></select>
+    </div>
+    <div class="filter-actions">
+      <button id="resetFilters" class="btn-secondary">Сбросить</button>
+    </div>
+  </aside>
+
+  <main class="staff-main">
+    <nav id="crumbs" aria-label="Связанные формы"></nav>
+    <div id="dataWarning" class="warn-banner" hidden></div>
+    <div class="table-toolbar">
+      <div class="seg-tabs" id="staffTabs">
+        <button type="button" class="seg-tab on" data-t="staff">Штатный персонал</button>
+        <button type="button" class="seg-tab" data-t="ctr">Подрядчики</button>
+      </div>
+      <div class="export-buttons">
+        <button id="exportExcel" class="btn-secondary">⬇ Excel</button>
+        <button id="exportPdf" class="btn-secondary">🖨 Печать / PDF</button>
+      </div>
+    </div>
+
+    <!-- ================== ШТАТ ================== -->
+    <div id="staffTab">
+      <section class="summary" id="sCards"></section>
+      <section class="panel">
+        <h2>Сотрудники</h2>
+        <div id="sFbar"></div>
+        <div class="legend" id="sLegend"></div>
+        <div class="tbl"><table class="d" id="sTbl"></table></div>
+        <p class="note">Признаки выгорания — повод для разговора руководителя и перераспределения нагрузки, а не оценка сотрудника. Они считаются относительно графика из справочника «Персонал»: на вахте 15/15 пятнадцать дней подряд — норма, для 5/2 признак — больше 5 дней подряд или мало отдыха за неделю (для 5/2 пн–пт ещё и выходы в субботу/воскресенье); длинная смена — длиннее смены по графику больше чем на 2 ч (предел сверхурочных, ТК РК ст. 78); на вахте загрузка берётся средней за 3 месяца (суммированный учёт). Если график не задан — общие пороги: 12 дней подряд, смены &gt; 12 ч. Рабочий день — день с нарядом с указанным временем; записи «00:00–23:59» (наряд на целые сутки) присутствием не считаются. Ночь — 22:00–06:00. Эффективность сравнивается с медианой бригады по тем же типам работ.</p>
+      </section>
+      <section class="panel">
+        <h2>Матрица компетенций: часы по подсистемам за период</h2>
+        <p class="note">Чем темнее, тем больше опыта. Справа — покрытие: сколько штатных сотрудников отработали по подсистеме ≥ 150 ч (за 12 мес, пропорционально для другого периода) и сколько часов закрыли подрядчики. Покрытие ≤ 2 человек — риск на время отпуска или увольнения. ТО в матрицу не входит.</p>
+        <div class="hm" id="skill"></div>
+      </section>
+    </div>
+
+    <!-- ================== ПОДРЯДЧИКИ ================== -->
+    <div id="ctrTab" hidden>
+      <section class="summary" id="cCards"></section>
+      <div class="grid2">
+        <section class="panel"><h2>Часы по месяцам: штат и подрядчики</h2>
+          <div class="legend"><span><i class="sw" style="background:#8a97a8"></i>штат</span><span><i class="sw" style="background:#b07a3c"></i>подрядчики</span><span>цифра над столбцом — доля подрядчиков</span></div>
+          <div id="cChart"></div>
+        </section>
+        <section class="panel"><h2>Что отдаём подрядчикам: подсистемы</h2>
+          <p class="note">Если подсистему в основном делают подрядчики, а в штате по ней 1–2 человека — кандидат на обучение своих специалистов.</p>
+          <div id="cSub"></div>
+        </section>
+      </div>
+      <section class="panel">
+        <h2>Подрядчики</h2>
+        <div id="cFbar"></div>
+        <div class="tbl"><table class="d" id="cTbl"></table></div>
+        <p class="note">Стоимость = часы × ставка из договора (поле «Ставка, за час» в справочнике «Персонал» для организации-подрядчика). Часы на наряд сравниваются со штатом на тех же типах работ.</p>
+      </section>
+    </div>
+  </main>
+  </div>
+
+  <script type="module" src="staff-details.js?v=63"></script>
+</body>
+</html>

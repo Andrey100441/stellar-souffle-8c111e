@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Журнал ремонтов и запчастей</title>
+<link rel="stylesheet" href="style.css?v=104" />
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Журнал ремонтов и запчастей</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Журнал ремонтов и запчастей</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <main class="repair-main">
+    <div class="crumbs">
+      <a href="fleet-status.html">Состояние парка</a> › <a href="index.html" id="availLink">Доступность и надёжность</a> › <b id="pageTitle">Журнал ремонтов и запчастей — по дням</b>
+    </div>
+
+    <div class="repair-filters">
+      <div class="filter-group"><label for="filterMine">Шахта</label><select id="filterMine"><option value="">Все</option></select></div>
+      <div class="filter-group"><label for="filterModel">Модель</label><select id="filterModel"><option value="">Все</option></select></div>
+      <div class="filter-group"><label for="filterCode">Борт</label><select id="filterCode"><option value="">Все</option></select></div>
+      <div class="filter-group">
+        <label>Месяц</label>
+        <div class="month-nav"><button type="button" id="mPrev" class="btn-secondary">◀</button><span class="mname" id="mName"></span><button type="button" id="mNext" class="btn-secondary">▶</button></div>
+      </div>
+      <div class="filter-group"><label for="q">Поиск</label><input type="text" id="q" placeholder="узел, запчасть, № наряда" /></div>
+    </div>
+
+    <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+    <div id="errorBanner" class="error-banner" hidden></div>
+
+    <div class="cards" id="cards"></div>
+
+    <section class="panel">
+      <h2 id="ganttTitle">Простой по дням</h2>
+      <div class="legend">
+        <span><i class="sw" style="background:#d23a2f"></i>аварийный</span>
+        <span><i class="sw" style="background:#3a5bd9"></i>плановый</span>
+        <span><i class="sw" style="background:#2e9d4f"></i>ТО</span>
+        <span class="hint-text" style="margin:0">Полоса — время от начала до окончания наряда. Наведите курсор, чтобы увидеть наряд; нажмите — журнал прокрутится к нему.</span>
+      </div>
+      <div class="gantt" id="gantt"></div>
+    </section>
+
+    <div class="repair-layout">
+      <section class="panel">
+        <div class="toolbar">
+          <div class="chips" id="typeChips"></div>
+          <div style="display:flex;gap:6px">
+            <button class="btn-secondary" id="expandAll">Раскрыть все</button>
+            <button class="btn-secondary" id="exportExcel">⬇ Excel</button>
+          </div>
+        </div>
+        <div class="whead"><span></span><span>Время</span><span style="text-align:right">Простой</span><span>Тип</span><span>Подсистема › узел · причина</span><span>Машина · инициатор</span><span style="text-align:right">Запчасти</span><span style="text-align:right">Трудозатр.</span></div>
+        <div id="journal"></div>
+      </section>
+      <div class="repair-side">
+        <section class="panel"><h2>Аварийный простой по подсистемам</h2><table id="sideSub"></table></section>
+        <section class="panel"><h2>Запчасти за месяц</h2><table id="sideParts"></table><p class="hint-text" style="margin:6px 0 0;padding:0">Кол-во и сумма по всем нарядам выборки.</p></section>
+        <section class="panel"><h2>Исполнители</h2><table id="sideStaff"></table></section>
+      </div>
+    </div>
+  </main>
+  </div>
+
+  <script type="module" src="repair-details.js?v=107"></script>
+</body>
+</html>

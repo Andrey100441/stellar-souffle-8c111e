@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Персонал</title>
+<link rel="stylesheet" href="style.css?v=105" />
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Персонал</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Персонал</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+      <button id="filterToggle" class="btn-icon" aria-label="Фильтры">☰ Фильтры</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+  <div id="errorBanner" class="error-banner" hidden></div>
+
+  <aside id="filterPanel" class="filters">
+    <div class="filter-group">
+      <label for="filterObject">Объект</label>
+      <select id="filterObject"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterPos">Должность</label>
+      <select id="filterPos"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterFamaly">ФИО</label>
+      <select id="filterFamaly"><option value="">Все</option></select>
+    </div>
+    <div class="filter-actions">
+      <button id="resetFilters" class="btn-secondary">Сбросить</button>
+    </div>
+  </aside>
+
+  <main>
+    <nav id="crumbs" aria-label="Связанные формы"></nav>
+    <section class="summary" id="summaryCards"></section>
+
+    <section class="table-section table-section-fit">
+      <div class="table-toolbar">
+        <h2>Список персонала</h2>
+        <div class="export-buttons">
+          <button id="addStaffBtn" class="btn-primary">+ Новый сотрудник</button>
+          <button id="downloadTemplateBtn" class="btn-secondary">⬇ Скачать образец</button>
+          <button id="excelImportBtn" class="btn-secondary">⬆ Загрузить из Excel</button>
+          <input type="file" id="excelFileInput" accept=".xlsx,.xls" hidden />
+        </div>
+      </div>
+      <div class="table-wrap table-wrap-fit">
+        <table id="dataTable" class="equipment-table">
+          <thead>
+            <tr>
+              <th>ФИО</th><th>Должность</th><th>Объект</th><th>Норма часов/мес</th><th>Тип</th><th>График</th><th>Организация / ставка</th><th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <div id="staffModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h2 id="staffModalTitle">Новый сотрудник</h2>
+        <button id="staffModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="staffForm" class="equipment-form">
+          <input type="hidden" id="sfId" />
+          <div class="filter-group">
+            <label for="sfFamaly">ФИО *</label>
+            <input type="text" id="sfFamaly" required />
+          </div>
+          <div class="filter-group">
+            <label for="sfPos">Должность *</label>
+            <input type="text" id="sfPos" list="posOptions" required />
+            <datalist id="posOptions"></datalist>
+          </div>
+          <div class="filter-group">
+            <label for="sfObject">Объект *</label>
+            <select id="sfObject" required><option value="">Выберите</option></select>
+          </div>
+          <div class="filter-group">
+            <label for="sfMonthTime">Норма часов/мес</label>
+            <input type="number" step="1" id="sfMonthTime" />
+          </div>
+          <div class="filter-group">
+            <label for="sfStaffType">Тип</label>
+            <select id="sfStaffType">
+              <option value="staff">Штат</option>
+              <option value="contractor">Подрядчик</option>
+            </select>
+          </div>
+          <div class="filter-group" id="sfOrgGroup" hidden>
+            <label for="sfOrganization">Организация (подрядчик)</label>
+            <input type="text" id="sfOrganization" />
+          </div>
+          <div class="filter-group" id="sfRateGroup" hidden>
+            <label for="sfRate">Ставка, за час</label>
+            <input type="number" step="0.01" id="sfRate" />
+          </div>
+          <div class="filter-group">
+            <label for="sfSchedule" title="Нужен для оценки риска выгорания на странице «Персонал»: признаки считаются относительно графика.">График работы</label>
+            <select id="sfSchedule">
+              <option value="">Не задан</option>
+              <option value="vahta">Вахта</option>
+              <option value="5x2">5/2 пн–пт</option>
+              <option value="5x2_sliding">5/2 скользящий</option>
+              <option value="shift">Сменный (2/2, 4/4…)</option>
+            </select>
+          </div>
+          <div class="filter-group" id="sfCycleGroup" hidden>
+            <label for="sfDaysOn">Рабочих дней / дней отдыха в цикле</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="number" step="1" min="1" max="90" id="sfDaysOn" style="width:80px" />
+              <span>/</span>
+              <input type="number" step="1" min="0" max="90" id="sfDaysOff" style="width:80px" />
+            </div>
+          </div>
+          <div class="filter-group" id="sfShiftGroup" hidden>
+            <label for="sfShiftHours">Длительность смены, ч</label>
+            <input type="number" step="0.5" min="1" max="24" id="sfShiftHours" />
+          </div>
+          <div class="modal-form-actions">
+            <button type="button" id="staffCancelBtn" class="btn-secondary">Отмена</button>
+            <button type="submit" class="btn-primary">Сохранить</button>
+          </div>
+          <div id="staffFormError" class="error-banner" hidden></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="importModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-narrow">
+      <div class="modal-header">
+        <h2>Импорт из Excel</h2>
+        <button id="importModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="importSummary" style="padding: 16px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="staff-roster.js?v=33"></script>
+</body>
+</html>

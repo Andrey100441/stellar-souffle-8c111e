@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Оборудование</title>
+<link rel="stylesheet" href="style.css?v=105" />
+<style>
+  /* Раздел «Машина» — как блок повторных отказов (#eqRepeatSec): eq-sec-key, eq-purpose, eq-scope. Поле «Тип машины» — первое в сетке. */
+  .eq-type-field { grid-column: 1 / -1; }
+  .eq-type-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .eq-type-row select { flex: 1 1 260px; max-width: 360px; font-weight: 600; }
+  .eq-eo { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; cursor: pointer; }
+  .eq-eo input { width: auto; }
+  /* «Справочник ТО (PM)» — в стиле переключателя «Отслеживаемые системы (FS)» */
+  .eq-pm-btn { border: 1px solid #7a4a1e; border-radius: 8px; background: #fff; color: #7a4a1e; padding: 6px 16px; font: inherit; font-size: 16px; font-weight: 600; line-height: normal; white-space: nowrap; cursor: pointer; }
+  .eq-pm-btn:hover, .eq-pm-btn:focus-visible { background: #7a4a1e; color: #fff; }
+  .eq-confirm-h { font-weight: 700; color: #7a4a1e; margin: 10px 0 4px; }
+  /* Список техники — по ширине страницы, без горизонтальной прокрутки: фиксированные доли столбцов,
+     длинное значение обрезается «…» (полностью — по нажатию на ячейку), кнопки действий переносятся. */
+  .equipment-table { table-layout: fixed; font-size: 12px; }
+  .equipment-table th, .equipment-table td { padding: 7px 6px; overflow: hidden; text-overflow: ellipsis; }
+  .equipment-table th { white-space: normal; line-height: 1.2; }
+  .equipment-table td:nth-child(11), .equipment-table td:nth-child(12) { white-space: normal; }
+  .equipment-table td.row-actions { display: table-cell; white-space: normal; overflow: visible; }
+  .equipment-table td.row-actions .btn-small { margin: 0 4px 4px 0; padding: 3px 8px; font-size: 11.5px; }
+</style>
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Оборудование</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Оборудование</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+      <button id="filterToggle" class="btn-icon" aria-label="Фильтры">☰ Фильтры</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+  <div id="errorBanner" class="error-banner" hidden></div>
+
+  <aside id="filterPanel" class="filters">
+    <div class="filter-group">
+      <label for="filterObject">Объект</label>
+      <select id="filterObject"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterMine">Шахта</label>
+      <select id="filterMine"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterModel">Модель</label>
+      <select id="filterModel"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterType">Тип машины</label>
+      <select id="filterType"><option value="">Все</option><option value="none">— без типа —</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterLocalCode">Борт</label>
+      <select id="filterLocalCode"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterStatus">Статус</label>
+      <select id="filterStatus">
+        <option value="active">Активные</option>
+        <option value="all">Все</option>
+        <option value="inactive">Деактивированные</option>
+      </select>
+    </div>
+    <div class="filter-group filter-group-checkbox">
+      <label><input type="checkbox" id="filterUnconfiguredOnly" /> Только не настроенные (повторы)</label>
+    </div>
+    <div class="filter-actions">
+      <button id="resetFilters" class="btn-secondary">Сбросить</button>
+    </div>
+  </aside>
+
+  <main>
+    <nav id="crumbs" aria-label="Связанные формы"></nav>
+    <section class="summary" id="summaryCards"></section>
+
+    <section class="table-section table-section-fit">
+      <div class="table-toolbar">
+        <h2>Список техники</h2>
+        <div class="export-buttons">
+          <button id="addEquipmentBtn" class="btn-primary">+ Новая машина</button>
+          <button id="downloadTemplateBtn" class="btn-secondary">⬇ Скачать образец</button>
+          <button id="excelImportBtn" class="btn-secondary">⬆ Загрузить из Excel</button>
+          <input type="file" id="excelFileInput" accept=".xlsx,.xls" hidden />
+        </div>
+      </div>
+      <div class="table-wrap table-wrap-fit">
+        <table id="dataTable" class="equipment-table">
+          <colgroup>
+            <col style="width:4%"><col style="width:6%"><col style="width:11%"><col style="width:8%"><col style="width:5%">
+            <col style="width:7%"><col style="width:8%"><col style="width:8%"><col style="width:8%"><col style="width:7%">
+            <col style="width:8%"><col style="width:7%"><col style="width:13%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Код</th><th>Борт</th><th>Модель</th><th>Тип</th><th>FS</th><th>Шахта</th><th>Объект</th>
+              <th>Зав. номер</th><th>Серийный номер</th><th>Ввод в экспл.</th><th>Статус</th><th>Повторы</th><th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <div id="equipmentModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-wide">
+      <div class="modal-header">
+        <h2 id="equipmentModalTitle">Новая машина</h2>
+        <button id="equipmentModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="equipmentForm" class="equipment-form-v2">
+          <input type="hidden" id="eqCod" />
+
+          <div class="eq-sec eq-sec-key" id="eqMachineSec">
+            <div class="eq-sec-title">Машина <small>* — обязательные поля</small></div>
+            <div class="equipment-form">
+              <div class="filter-group eq-type-field">
+                <label for="eqType">Тип машины</label>
+                <div class="eq-type-row">
+                  <select id="eqType"><option value="">— без типа —</option></select>
+                  <button type="button" class="btn-secondary btn-small" id="eqTypeAdd" hidden title="Добавить новый тип машины">+ тип</button>
+                  <button type="button" class="btn-secondary btn-small" id="eqTypeRename" hidden title="Переименовать выбранный тип">переименовать</button>
+                </div>
+                <label class="eq-eo"><input type="checkbox" id="eqEo" /> <b>ЕО (ежедневный осмотр)</b> <span class="eq-note">— в форме ввода ремонтов в «Шаге ТО» появится кнопка «ЕО»</span></label>
+              </div>
+              <div class="filter-group">
+                <label for="eqLocalCode">Борт / код *</label>
+                <input type="text" id="eqLocalCode" required />
+              </div>
+              <div class="filter-group">
+                <label for="eqModel">Модель *</label>
+                <input type="text" id="eqModel" list="modelOptions" required />
+                <datalist id="modelOptions"></datalist>
+              </div>
+              <div class="filter-group">
+                <label for="eqObject">Объект *</label>
+                <input type="text" id="eqObject" list="objectOptions" required />
+                <datalist id="objectOptions"></datalist>
+              </div>
+              <div class="filter-group">
+                <label for="eqMine">Шахта *</label>
+                <input type="text" id="eqMine" list="mineOptions" required />
+                <datalist id="mineOptions"></datalist>
+              </div>
+              <div class="filter-group">
+                <label for="eqCommissioningDate">Дата ввода в эксплуатацию</label>
+                <input type="date" id="eqCommissioningDate" />
+              </div>
+              <div class="filter-group">
+                <label for="eqOwnerNumber">Номер владельца</label>
+                <input type="text" id="eqOwnerNumber" />
+              </div>
+              <div class="filter-group">
+                <label for="eqManufactureNumber">Заводской номер</label>
+                <input type="text" id="eqManufactureNumber" />
+              </div>
+              <div class="filter-group">
+                <label for="eqSerialNumber">Серийный номер</label>
+                <input type="text" id="eqSerialNumber" />
+              </div>
+              <div class="filter-group">
+                <label for="eqCustomerFullName">Заказчик</label>
+                <input type="text" id="eqCustomerFullName" list="customerOptions" />
+                <datalist id="customerOptions"></datalist>
+              </div>
+              <div class="filter-group">
+                <label for="eqContractorFullName">Подрядчик</label>
+                <input type="text" id="eqContractorFullName" list="contractorOptions" />
+                <datalist id="contractorOptions"></datalist>
+              </div>
+            </div>
+            <div class="eq-purpose"><b>Тип машины</b> определяет рабочее оборудование и список отказов в форме ввода ремонтов (у самосвала — кузов, у погрузчика — ковш, у бульдозера — отвал, у буровой — стрела, у осветительной мачты его нет). Отказы по типам настраиваются в «Словаре разбора», раздел 2.</div>
+            <div class="eq-scope">
+              <label><input type="checkbox" id="eqTypeApplyModel"> <span><b>Применить тип и ЕО для одинаковых моделей оборудования</b> — тип <b id="eqTypeApplyTypeName"></b> <span id="eqTypeApplyEo"></span> всем машинам модели <b id="eqTypeApplyModelName"></b> <span class="eq-note" id="eqTypeApplyModelCount"></span></span></label>
+              <label class="eq-scope-sub" id="eqTypeApplyCustL"><input type="checkbox" id="eqTypeApplyCustomer" disabled> <span>только у заказчика <b id="eqTypeApplyCustName"></b> <span class="eq-note" id="eqTypeApplyCustCount"></span></span></label>
+              <div class="eq-note" id="eqTypeScopeNote" style="margin-top:4px"></div>
+            </div>
+          </div>
+
+          <div class="eq-sec eq-sec-key" id="eqFsSec">
+            <div class="eq-sec-title">Отслеживаемые системы (FS) <b class="eq-star">*</b></div>
+            <div class="eq-fs" id="eqFsToggle">
+              <button type="button" data-fs="TR">TR</button><button type="button" data-fs="DR1">DR1</button><button type="button" data-fs="DR2">DR2</button>
+            </div>
+            <input type="hidden" id="eqFs" required />
+            <div class="eq-note" id="eqFsNote"></div>
+          </div>
+
+          <div class="eq-sec eq-sec-key" id="eqPmSec">
+            <div class="eq-sec-title">Техническое обслуживание <button type="button" id="openPmTableBtn" class="eq-pm-btn" title="Открыть справочник ТО на периоде этой машины">Справочник ТО (PM)</button></div>
+            <table class="eq-t" id="eqPmTable"></table>
+            <div class="eq-note">Маска — список ТО по порядку из справочника (a–g), шаг — наработка между соседними ТО.</div>
+          </div>
+
+          <div class="eq-sec eq-sec-key" id="eqRepeatSec">
+            <div class="eq-sec-title">Окно повторного отказа <span id="eqRepeatStatus"></span></div>
+            <div class="eq-purpose"><b>Назначение.</b> Окно определяет, какой аварийный отказ после работы на этой машине считается повторным. Один и тот же расчёт используется в трёх местах:
+              <ul>
+                <li><b>Состояние парка оборудования</b> — сигнал «Повторные» в строке машины: доля работ, после которых был повторный отказ;</li>
+                <li><b>Журнал ремонтов и запчастей</b> — метка «🔁 повтор» у аварийного наряда и фильтр повторов (пары «работа → повторный отказ»);</li>
+                <li><b>Персонал</b> — показатель «Повторные отказы» (качество работ) у сотрудников и подрядчиков, раздельно «после ремонтов» и «после ТО».</li>
+              </ul>
+            </div>
+            <div class="eq-note">Настраивается для каждой машины отдельно (общих значений нет). Для каждой системы: если заполнены дни — окно по дням; если дни пустые — по наработке этой системы. Если пусто и то и другое — повторы по этой системе <b>не считаются</b>, а показатели машины на всех страницах серые «⚙ не настроено».</div>
+            <div class="eq-copyfrom">
+              <span>Заполнить как у машины:</span>
+              <select id="eqCopyFrom"><option value="">— выберите машину той же модели —</option></select>
+              <button type="button" class="btn-secondary btn-small" id="eqCopyFromBtn">Заполнить</button>
+              <span class="eq-note">копирует окна и «Что учитывать», потом можно поправить</span>
+            </div>
+            <h4 class="eq-rw-h">После ТО <span>— любой аварийный отказ машины</span></h4>
+            <table class="eq-t" id="eqWinPm"></table>
+            <h4 class="eq-rw-h">После ремонта <span>— аварийный отказ той же подсистемы</span></h4>
+            <table class="eq-t" id="eqWinRp"></table>
+
+            <details class="eq-what" open>
+              <summary>Что учитывать <span>— для этой машины</span></summary>
+              <div class="eq-note" style="margin-top:4px">Свой выбор у каждой машины: разные заказчики — разные условия эксплуатации. Снятый флажок — такие наряды этой машины не участвуют в расчёте повторов ни на одной странице. Число справа — нарядов этой машины с этим значением за 12 месяцев.</div>
+              <div class="eq-lh">Тип работ <span class="eq-note">— какие работы запускают отсчёт окна</span></div>
+              <div class="eq-list" id="eqL-types"></div>
+              <div class="eq-lists">
+                <div>
+                  <div class="eq-lh">Описание ремонта</div>
+                  <div class="eq-tools"><input placeholder="Поиск" data-l="reason"><button type="button" data-a="on" data-l="reason">все</button><button type="button" data-a="off" data-l="reason">снять</button></div>
+                  <div class="eq-list" id="eqL-reason"></div>
+                </div>
+                <div>
+                  <div class="eq-lh">Инициатор ремонта</div>
+                  <div class="eq-tools"><input placeholder="Поиск" data-l="init"><button type="button" data-a="on" data-l="init">все</button><button type="button" data-a="off" data-l="init">снять</button></div>
+                  <div class="eq-list" id="eqL-init"></div>
+                </div>
+              </div>
+            </details>
+
+            <div class="eq-scope">
+              <label><input type="checkbox" id="eqApplyModel"> <span><b>Применить для одинаковых моделей оборудования</b> — окна и «Что учитывать» будут скопированы во все машины модели <b id="eqApplyModelName"></b> с таким же FS <span class="eq-note" id="eqApplyModelCount"></span></span></label>
+              <label class="eq-scope-sub" id="eqApplyCustL"><input type="checkbox" id="eqApplyCustomer" disabled> <span>только у заказчика <b id="eqApplyCustName"></b> <span class="eq-note" id="eqApplyCustCount"></span></span></label>
+              <div class="eq-note" id="eqScopeNote" style="margin-top:4px"></div>
+            </div>
+          </div>
+
+          <div class="modal-form-actions" style="justify-content: space-between;">
+            <span class="eq-req" id="eqReqNote"></span>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" id="equipmentCancelBtn" class="btn-secondary">Отмена</button>
+              <button type="submit" class="btn-primary" id="eqSaveBtn">Сохранить</button>
+            </div>
+          </div>
+          <div id="equipmentFormError" class="error-banner" hidden></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="repeatScopeConfirmModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-narrow">
+      <div class="modal-header">
+        <h2 id="repeatScopeConfirmTitle">Подтвердите копирование настроек</h2>
+        <button id="repeatScopeConfirmClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px;">
+        <div id="repeatScopeConfirmText"></div>
+        <div class="modal-form-actions" style="margin-top: 14px;">
+          <button type="button" id="repeatScopeConfirmCancel" class="btn-secondary">Отмена</button>
+          <button type="button" id="repeatScopeConfirmOk" class="btn-primary">Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="hardDeleteModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-narrow">
+      <div class="modal-header">
+        <h2>Удалить безвозвратно</h2>
+        <button id="hardDeleteModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px;">
+        <p class="danger-warning">Это действие удалит машину и ВСЮ связанную историю без возможности восстановления.</p>
+        <div id="hardDeletePreview"></div>
+        <p style="margin-top: 14px;">Чтобы подтвердить, введите борт/код машины: <strong id="hardDeleteExpected"></strong></p>
+        <input type="text" id="hardDeleteConfirmInput" placeholder="Введите борт/код" />
+        <div class="modal-form-actions" style="margin-top: 14px;">
+          <button type="button" id="hardDeleteCancelBtn" class="btn-secondary">Отмена</button>
+          <button type="button" id="hardDeleteConfirmBtn" class="btn-danger" disabled>Удалить безвозвратно</button>
+        </div>
+        <div id="hardDeleteError" class="error-banner" hidden></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="pmTableModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h2>Справочник ТО (PM)</h2>
+        <div>
+          <button id="pmTableModalMinimize" class="btn-icon" aria-label="Свернуть" title="Свернуть">−</button>
+          <button id="pmTableModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <p class="hint-text">Источник для генератора ТО. Каждый период (a–g, см. поле "Период ТО" у машины) — свой список ТО по порядку; порядковый номер в списке и есть длина цикла для этого периода, считается автоматически.</p>
+
+        <div class="filter-group" style="max-width: 200px; margin-bottom: 12px;">
+          <label for="pmPeriodSelect">Период</label>
+          <select id="pmPeriodSelect">
+            <option value="a">a</option>
+            <option value="b">b</option>
+            <option value="c">c</option>
+            <option value="d">d</option>
+            <option value="e">e</option>
+            <option value="f">f</option>
+            <option value="g">g</option>
+          </select>
+        </div>
+
+        <div class="table-wrap">
+          <table id="pmDataTable">
+            <thead>
+              <tr>
+                <th>№</th><th>Название ТО</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="pmDataTableBody"></tbody>
+            <tfoot>
+              <tr>
+                <td></td>
+                <td><input type="text" id="pmNewDescr" placeholder="Например, ТО500" /></td>
+                <td><button type="button" id="pmAddBtn" class="btn-primary btn-small">Добавить</button></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div id="pmEditError" class="error-banner" hidden></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="importModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-narrow">
+      <div class="modal-header">
+        <h2>Импорт из Excel</h2>
+        <button id="importModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="importSummary" style="padding: 16px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="equipment.js?v=59"></script>
+</body>
+</html>

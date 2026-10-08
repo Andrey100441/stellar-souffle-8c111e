@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="referrer" content="no-referrer" />
+<title>Подключить устройство</title>
+<link rel="stylesheet" href="style.css?v=102" />
+</head>
+<body>
+  <div class="login-screen">
+    <div class="login-card">
+      <h1>Вход с другого устройства</h1>
+      <p class="login-sub">На устройстве, где вы уже вошли, нажмите на свою почту вверху справа → «Мои устройства» → «Подключить другое устройство» и отсканируйте QR-код камерой или введите код здесь.</p>
+
+      <form id="claimForm" class="pair-stack">
+        <input type="text" id="pairCode" class="pair-input pair-code" placeholder="XXXX-XXXX" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" required />
+        <label class="pair-left hint-text" for="pairName">Как назвать это устройство</label>
+        <input type="text" id="pairName" class="pair-input" maxlength="60" required />
+        <button type="submit" class="btn-primary" id="claimBtn">Подключить</button>
+      </form>
+
+      <div id="waitBlock" class="pair-stack" hidden>
+        <div class="pair-spinner" aria-hidden="true"></div>
+        <p>Подтвердите подключение <b id="waitName"></b> на устройстве, где вы уже вошли.</p>
+        <p class="hint-text">Осталось <span id="waitLeft"></span></p>
+        <button type="button" class="btn-secondary" id="waitCancel">Отмена</button>
+      </div>
+
+      <div id="pairMessage" class="login-message" hidden></div>
+      <p class="pair-foot"><a href="index.html">Обычный вход по коду с почты</a></p>
+    </div>
+  </div>
+  <script type="module" src="pair.js?v=6"></script>
+</body>
+</html>

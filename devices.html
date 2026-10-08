@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Мои устройства</title>
+<link rel="stylesheet" href="style.css?v=102" />
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Мои устройства</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Мои устройства</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <div id="errorBanner" class="error-banner" hidden></div>
+
+  <main>
+    <section class="table-section">
+      <div class="table-toolbar"><h2>Подключить другое устройство</h2></div>
+      <p class="hint-text">Телефон, планшет или другой компьютер можно подключить без почты: нажмите кнопку и отсканируйте QR-код камерой телефона, или откройте на новом устройстве страницу «Вход с другого устройства» и введите код. Подключение нужно будет подтвердить здесь.</p>
+      <button type="button" class="btn-primary" id="pairStart">Подключить другое устройство</button>
+
+      <div id="pairBox" class="pair-box" hidden>
+        <div id="pairQr" class="pair-qr" aria-label="QR-код для подключения"></div>
+        <div class="pair-side">
+          <div class="hint-text">Код для ввода вручную</div>
+          <div id="pairCodeShow" class="pair-code-show"></div>
+          <div class="hint-text">Адрес: <span id="pairUrl"></span></div>
+          <div class="hint-text">Код действует ещё <b id="pairLeft"></b>, один раз.</div>
+          <button type="button" class="btn-secondary" id="pairCancel">Отменить</button>
+        </div>
+      </div>
+
+      <div id="confirmBox" class="pair-confirm" hidden>
+        <p>Подключить <b id="confirmName"></b>?</p>
+        <p class="hint-text" id="confirmUa"></p>
+        <p class="hint-text">Подтверждайте, только если это ваше устройство и вы сами только что ввели на нём код.</p>
+        <button type="button" class="btn-primary" id="confirmYes">Подключить</button>
+        <button type="button" class="btn-secondary" id="confirmNo">Отклонить</button>
+      </div>
+
+      <div id="pairMessage" class="login-message" hidden></div>
+    </section>
+
+    <section class="table-section">
+      <div class="table-toolbar"><h2>Где выполнен вход</h2></div>
+      <p class="hint-text">Все устройства и браузеры, где открыт вход в вашу учётную запись. «Отключить» закрывает вход на устройстве; там придётся войти заново (устройство теряет доступ в течение часа).</p>
+      <div class="table-wrap">
+        <table class="equipment-table">
+          <thead><tr><th>Устройство</th><th>Браузер</th><th>Вход выполнен</th><th>Последняя активность</th><th></th></tr></thead>
+          <tbody id="devicesBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <script type="module" src="devices.js?v=11"></script>
+</body>
+</html>

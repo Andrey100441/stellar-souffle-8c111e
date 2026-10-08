@@ -1,0 +1,14 @@
+# Публикация сайта из GitHub (ветка main).
+# На сайт копируются только страницы (html, js, css); миграции базы,
+# задания GitHub и служебные файлы репозитория наружу не попадают.
+[build]
+  command = "rm -rf site && mkdir site && cp *.html *.js *.css site/"
+  publish = "site"
+
+# Превью для PR и сборки других веток не нужны (тратят кредиты бесплатного тарифа):
+# такие сборки Netlify пропускает. Собирается только main.
+[context.deploy-preview]
+  ignore = "exit 0"
+
+[context.branch-deploy]
+  ignore = "exit 0"

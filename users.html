@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Пользователи</title>
+<link rel="stylesheet" href="style.css?v=102" />
+<style>
+  .users-scope select[multiple] { min-width: 170px; min-height: 84px; }
+  .users-scope label { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .users-add { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin: 8px 0 18px; }
+  .users-add .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+  .users-add input[type="email"] { min-width: 240px; }
+  .muted { color: #888; font-size: 12px; }
+  .role-note { font-size: 12px; color: #666; margin-top: 6px; }
+  /* Таблица пользователей помещается в ширину страницы: фиксированные доли столбцов,
+     перенос текста, выпадающие списки по ширине ячейки, кнопки друг под другом. */
+  .users-wrap { overflow: visible; }
+  table.users-table { table-layout: fixed; white-space: normal; font-size: 12.5px; }
+  table.users-table th, table.users-table td { padding: 8px 6px; vertical-align: top; }
+  table.users-table th { white-space: normal; }
+  table.users-table td:first-child { overflow-wrap: anywhere; }
+  table.users-table select { width: 100%; min-width: 0; max-width: 100%; font-size: 12px; }
+  table.users-table select[multiple] { min-width: 0; min-height: 96px; }
+  table.users-table label { white-space: normal; }
+  table.users-table .row-actions { flex-direction: column; align-items: stretch; white-space: normal; }
+  table.users-table .row-actions .btn-small { padding: 5px 6px; }
+  .admin-scope-note { font-size: 11px; color: #888; margin-top: 4px; }
+  .admin-scope-note[hidden] { display: none; }
+  .users-scope select:disabled, .users-scope input:disabled { opacity: 0.45; cursor: not-allowed; }
+  @media (max-width: 900px) {
+    .users-wrap { overflow-x: auto; }
+    table.users-table { min-width: 860px; }
+  }
+</style>
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Пользователи</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Пользователи</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+  <div id="errorBanner" class="error-banner" hidden></div>
+
+  <main>
+    <section class="table-section">
+      <div class="table-toolbar"><h2>Пригласить пользователя</h2></div>
+      <p class="hint-text">На указанную почту сразу уходит письмо-приглашение. Пользователь открывает его, нажимает «Принять приглашение» и попадает в систему с выбранной ролью; дальше входит по коду с почты или подключает телефон по QR-коду (почта вверху справа → «Мои устройства»). Регистрации нет — войти может только тот, кого пригласили здесь. Пока приглашение не принято, его можно отправить ещё раз или отозвать.</p>
+      <form id="addForm" class="users-add users-scope">
+        <div class="field"><span>Почта</span><input type="email" id="addEmail" required placeholder="name@company.com" /></div>
+        <div class="field"><span>Уровень доступа</span>
+          <select id="addRole">
+            <option value="viewer" selected>Просмотр</option>
+            <option value="repair_entry">Ввод ремонтов</option>
+            <option value="editor">Редактор</option>
+            <option value="admin">Администратор</option>
+          </select>
+        </div>
+        <div class="field"><span>Область</span><label><input type="checkbox" id="addAll" /> Весь парк</label><div class="admin-scope-note" id="addScopeNote" hidden>администратор видит весь парк</div></div>
+        <div class="field"><span>Объекты</span><select id="addMines" multiple></select></div>
+        <div class="field"><span>Доступ</span><select id="addPages" multiple></select><div class="admin-scope-note" id="addPagesNote" hidden>администратору доступны все страницы</div></div>
+        <div class="field"><span>Стартовая страница</span><select id="addStart"></select></div>
+        <button type="submit" class="btn-primary" id="addBtn">Пригласить</button>
+      </form>
+      <p class="role-note">
+        <b>Просмотр</b> — видит данные своей области. <b>Ввод ремонтов</b> — только форма ввода ремонтов для машин своей области, без аналитики. <b>Редактор</b> — ещё может менять технику и плановые показатели своей области.
+        <b>Администратор</b> — весь парк, справочники (цены, шаги ТО, персонал), удаление оборудования и управление пользователями.
+        <b>Объекты</b> — область пользователя: шахты, сгруппированные по объекту (клик — выбрать или снять, можно несколько). Без области пользователь не видит технику.
+        <b>Доступ</b> — какие страницы видит пользователь (клик — выбрать или снять). Пусто — все страницы его уровня доступа. Администратору доступны все страницы, у него поле неактивно. Доступ только сужает уровень: «Пользователи» и «Словарь разбора» остаются у администратора, «Ввод ремонтов» — у редактора и администратора; уровню «Ввод ремонтов» всегда открыта только его форма. Закрытые страницы скрыты в меню, по ссылке открывается стартовая.
+        <b>Стартовая страница</b> — что открывается после входа (по коду с почты, по приглашению, по QR) и при открытии адреса сайта. «По уровню доступа»: «Ввод ремонтов» — форма ремонтов, остальные — «Состояние оборудования». Выбрать можно только страницу из «Доступа». У уровня «Ввод ремонтов» всегда открывается форма ремонтов.
+      </p>
+    </section>
+
+    <section class="table-section">
+      <div class="table-toolbar"><h2>Пользователи</h2></div>
+      <div class="table-wrap users-wrap">
+        <table class="equipment-table users-scope users-table">
+          <colgroup>
+            <col style="width:15%" /><col style="width:10%" /><col style="width:7%" /><col style="width:13%" />
+            <col style="width:18%" /><col style="width:14%" /><col style="width:11%" /><col style="width:12%" />
+          </colgroup>
+          <thead>
+            <tr><th>Почта</th><th>Уровень доступа</th><th>Весь парк</th><th>Объекты</th><th>Доступ</th><th>Стартовая страница</th><th>Статус / последний вход</th><th></th></tr>
+          </thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <script type="module" src="users.js?v=18"></script>
+</body>
+</html>

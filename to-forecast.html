@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Прогноз ТО</title>
+<link rel="stylesheet" href="style.css?v=105" />
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Прогноз ТО</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Прогноз ТО</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+      <button id="filterToggle" class="btn-icon" aria-label="Фильтры">☰ Фильтры</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+  <div id="errorBanner" class="error-banner" hidden></div>
+
+  <aside id="filterPanel" class="filters">
+    <div class="filter-group">
+      <label for="filterDeadline">Показать ТО до даты</label>
+      <input type="date" id="filterDeadline" />
+    </div>
+    <div class="filter-group">
+      <label for="filterAvgDays">Наработка за последние, дней</label>
+      <input type="number" step="1" min="1" id="filterAvgDays" value="30" />
+    </div>
+    <div class="filter-group">
+      <label for="filterObject">Объект</label>
+      <select id="filterObject"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterMine">Шахта</label>
+      <select id="filterMine"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterModel">Модель</label>
+      <select id="filterModel"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterCode">Борт / код</label>
+      <select id="filterCode"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterOverdue">Показать</label>
+      <select id="filterOverdue">
+        <option value="">Все</option>
+        <option value="overdue">Только просроченные</option>
+        <option value="upcoming">Только предстоящие</option>
+      </select>
+    </div>
+    <div class="filter-actions">
+      <button id="resetFilters" class="btn-secondary">Сбросить</button>
+    </div>
+  </aside>
+
+  <main>
+    <nav id="crumbs" aria-label="Связанные формы"></nav>
+    <section class="summary" id="summaryCards"></section>
+
+    <section class="table-section table-section-fit">
+      <div class="table-toolbar">
+        <h2>Плановые ТО</h2>
+        <div class="export-buttons">
+          <button id="exportExcel" class="btn-secondary">⬇ Excel</button>
+        </div>
+      </div>
+      <p class="hint-text">Прогноз строится от последнего выполненного ТО (журнал ремонтов, "Тех. обслуживание") и средней наработки в час за выбранное число дней (по умолчанию 30). Если машина долго стояла и недавно запущена — уменьшите "Наработка за последние, дней", чтобы средняя не занижалась простоем. Просроченные пункты (машина уже прошла нужную наработку, но ТО не отмечено) выделены красным.</p>
+      <div class="table-wrap table-wrap-fit">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>Объект</th><th>Шахта</th><th>Модель</th><th>Борт</th><th>FS</th>
+              <th>Тип ТО</th><th>Шаг цикла</th><th>Дата ТО</th><th>Дней до ТО</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <script type="module" src="to-forecast.js?v=29"></script>
+</body>
+</html>

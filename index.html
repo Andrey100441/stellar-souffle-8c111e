@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Доступность и надёжность техники</title>
+<link rel="stylesheet" href="style.css?v=102" />
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Доступность и надёжность техники</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Доступность и надёжность</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <main class="avail-main">
+    <div class="crumbs">
+      <a href="fleet-status.html">Состояние парка</a> › <b id="pageTitle">Доступность и надёжность — по месяцам</b> › <a href="repair-details.html">Журнал ремонтов и запчастей — по дням</a>
+    </div>
+
+    <div class="avail-filters">
+      <div class="filter-group"><label for="filterMine">Шахта</label><select id="filterMine"><option value="">Все</option></select></div>
+      <div class="filter-group"><label for="filterModel">Модель</label><select id="filterModel"><option value="">Все</option></select></div>
+      <div class="filter-group"><label for="filterCode">Борт</label><select id="filterCode"><option value="">Все</option></select></div>
+      <div class="machine-nav">
+        <button type="button" id="prevMachine" class="btn-secondary" title="Предыдущая машина">◀</button>
+        <button type="button" id="nextMachine" class="btn-secondary" title="Следующая машина">▶</button>
+      </div>
+      <div class="filter-group"><label>Период</label><div class="period-toggle" id="periodToggle"></div></div>
+    </div>
+
+    <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+    <div id="errorBanner" class="error-banner" hidden></div>
+
+    <div class="passport" id="passport"></div>
+
+    <section class="panel">
+      <div class="table-toolbar">
+        <h2>Показатели по месяцам</h2>
+        <span class="hint-text" style="margin:0">Цвет ячейки — план: <i class="sw" style="background:#e3f3e7"></i>в норме <i class="sw" style="background:#fdf2d3"></i>ниже до 10% <i class="sw" style="background:#fbe0dd"></i>ниже более 10%. Клик по месяцу в заголовке — журнал ремонтов за этот месяц.</span>
+      </div>
+      <div class="mx"><table class="mx" id="matrixTable"></table></div>
+      <p class="hint-text" id="matrixNote" hidden>* — план задан не у всех машин или не во всех месяцах: в клетке факт только там, где план есть (с ним и сравнивается); факт по всей выборке — в подсказке клетки.</p>
+    </section>
+
+    <div class="grid2">
+      <div class="panel"><h2>Доступность</h2>
+        <div class="legend"><span><i class="ln" style="border-color:#2563eb"></i>техники</span><span><i class="ln" style="border-color:#16a34a"></i>обслуживания</span><span><i class="ln ln-dash" style="border-color:#999"></i>план</span><span>● месяц ниже плана</span></div>
+        <div id="chAv"></div></div>
+      <div class="panel"><h2>Простой по типам ремонта и виновнику, ч</h2>
+        <div class="legend"><span><i class="sw" style="background:#d23a2f"></i>аварийный — вина сервиса</span><span><i class="sw" style="background:#f0a29b"></i>аварийный — вина рудника</span><span><i class="sw" style="background:#3a5bd9"></i>плановый</span><span><i class="sw" style="background:#2e9d4f"></i>ТО</span></div>
+        <div id="chDt"></div></div>
+      <div class="panel"><h2>Надёжность: отказы по наработке</h2>
+        <div class="legend" id="crowLegend"></div>
+        <div id="chCrow"></div></div>
+      <div class="panel"><h2>Запчасти и бюджет</h2>
+        <div class="legend"><span><i class="sw" style="background:#e8908a"></i>на аварийные</span><span><i class="sw" style="background:#8a97a8"></i>на плановые и ТО</span><span><i class="ln ln-dash" style="border-color:#333"></i>бюджет</span></div>
+        <div id="chCost"></div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel hm"><h2>Аварийный простой по подсистемам, ч</h2>
+        <p class="hint-text" style="margin:0 0 6px">Где и когда ломается. Чем темнее, тем больше часов.</p>
+        <div id="hmSub"></div></div>
+      <div class="panel hm"><h2>Причины аварийных отказов, шт</h2>
+        <p class="hint-text" style="margin:0 0 6px">Рост «неправильной эксплуатации» — вопрос к руднику, «некачественного ремонта» — к сервису.</p>
+        <div id="hmCause"></div></div>
+    </div>
+  </main>
+  </div>
+
+  <script type="module" src="app.js?v=83"></script>
+</body>
+</html>

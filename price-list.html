@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ценовой справочник</title>
+<link rel="stylesheet" href="style.css?v=102" />
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Ценовой справочник</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Ценовой справочник</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+      <button id="filterToggle" class="btn-icon" aria-label="Фильтры">☰ Фильтры</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+  <div id="errorBanner" class="error-banner" hidden></div>
+
+  <aside id="filterPanel" class="filters">
+    <div class="filter-group">
+      <label for="filterObject">Объект</label>
+      <select id="filterObject"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterMine">Шахта</label>
+      <select id="filterMine"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterYear">Год</label>
+      <select id="filterYear"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterSearch">Поиск (код / описание)</label>
+      <input type="text" id="filterSearch" placeholder="например, SEAL WASHER" />
+    </div>
+    <div class="filter-actions">
+      <button id="resetFilters" class="btn-secondary">Сбросить</button>
+    </div>
+  </aside>
+
+  <main>
+    <section class="summary" id="summaryCards"></section>
+
+    <section class="table-section table-section-fit">
+      <div class="table-toolbar">
+        <h2>Ценник запасных частей</h2>
+        <div class="export-buttons">
+          <button id="addPriceBtn" class="btn-primary">+ Новая цена</button>
+          <button id="exportPriceBtn" class="btn-secondary">⬇ Скачать справочник</button>
+          <button id="downloadTemplateBtn" class="btn-secondary">⬇ Скачать образец</button>
+          <button id="excelImportBtn" class="btn-secondary">⬆ Загрузить из Excel</button>
+          <button id="auditLogBtn" class="btn-secondary">📋 Журнал</button>
+          <input type="file" id="excelFileInput" accept=".xlsx,.xls" hidden />
+        </div>
+      </div>
+      <div class="table-wrap table-wrap-fit">
+        <table id="dataTable" class="equipment-table">
+          <thead>
+            <tr>
+              <th>Объект</th><th>Шахта</th><th>Запасная часть</th><th>Описание</th><th>Цена</th><th>Ед. изм.</th><th>Год</th><th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+      <div id="pagination" class="pagination"></div>
+    </section>
+  </main>
+  </div>
+
+  <div id="priceModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h2 id="priceModalTitle">Новая цена</h2>
+        <button id="priceModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="priceForm" class="equipment-form">
+          <input type="hidden" id="pfCod" />
+          <div class="filter-group">
+            <label for="pfMine">Шахта *</label>
+            <select id="pfMine" required></select>
+          </div>
+          <div class="filter-group">
+            <label for="pfSpare">Запасная часть *</label>
+            <input type="text" id="pfSpare" list="spareOptions" required />
+            <datalist id="spareOptions"></datalist>
+          </div>
+          <div class="filter-group">
+            <label for="pfDescription">Описание</label>
+            <input type="text" id="pfDescription" />
+          </div>
+          <div class="filter-group">
+            <label for="pfPrice">Цена *</label>
+            <input type="number" step="any" min="0" id="pfPrice" required />
+          </div>
+          <div class="filter-group">
+            <label for="pfUnit">Единица измерения</label>
+            <input type="text" id="pfUnit" list="unitOptions" />
+            <datalist id="unitOptions">
+              <option value="шт"></option>
+              <option value="кг"></option>
+              <option value="л"></option>
+              <option value="м"></option>
+              <option value="компл."></option>
+              <option value="уп."></option>
+              <option value="пара"></option>
+            </datalist>
+          </div>
+          <div class="filter-group">
+            <label for="pfYear">Год *</label>
+            <select id="pfYear" required></select>
+          </div>
+          <div class="modal-form-actions">
+            <button type="button" id="priceCancelBtn" class="btn-secondary">Отмена</button>
+            <button type="submit" class="btn-primary">Сохранить</button>
+          </div>
+          <div id="priceFormError" class="error-banner" hidden></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="importModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-narrow">
+      <div class="modal-header">
+        <h2>Импорт из Excel</h2>
+        <button id="importModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="importSummary" style="padding: 16px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="auditLogModal" class="modal-overlay" hidden>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Журнал действий</h2>
+        <button id="auditLogModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="export-buttons" style="margin-bottom: 10px;">
+          <button id="auditLogExportBtn" class="btn-secondary">⬇ Скачать</button>
+        </div>
+        <div class="table-wrap">
+          <table id="auditLogTable">
+            <thead>
+              <tr>
+                <th>Дата/время</th><th>Пользователь</th><th>Действие</th><th>Запчасть</th><th>Год</th><th>Детали</th>
+              </tr>
+            </thead>
+            <tbody id="auditLogTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="price-list.js?v=35"></script>
+</body>
+</html>

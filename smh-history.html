@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Наработка техники (SMH)</title>
+<link rel="stylesheet" href="style.css?v=105" />
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Наработка техники (SMH)</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Наработка техники (SMH)</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+      <button id="filterToggle" class="btn-icon" aria-label="Фильтры">☰ Фильтры</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+  <div id="errorBanner" class="error-banner" hidden></div>
+
+  <aside id="filterPanel" class="filters">
+    <div class="filter-group">
+      <label for="filterYear">Год</label>
+      <select id="filterYear"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterMonth">Месяц</label>
+      <select id="filterMonth"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterObject">Объект</label>
+      <select id="filterObject"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterMine">Шахта</label>
+      <select id="filterMine"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterModel">Модель</label>
+      <select id="filterModel"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterCode">Борт / код</label>
+      <select id="filterCode"><option value="">Все</option></select>
+    </div>
+    <div class="filter-actions">
+      <button id="resetFilters" class="btn-secondary">Сбросить</button>
+    </div>
+  </aside>
+
+  <main>
+    <nav id="crumbs" aria-label="Связанные формы"></nav>
+    <section class="summary" id="summaryCards"></section>
+
+    <section class="table-section table-section-fit">
+      <div class="table-toolbar">
+        <h2>Наработка по машинам</h2>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-swatch" style="background:#2563eb"></span>TR</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#16a34a"></span>DR1</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#7c3aed"></span>DR2</span>
+        </div>
+        <div class="export-buttons">
+          <button id="exportExcel" class="btn-secondary">⬇ Excel</button>
+        </div>
+      </div>
+      <p class="hint-text hint-text-spaced">Наработка оборудования вносится ежедневно по каждой машине: TR — наработка двигателя, DR1/DR2 — дополнительные подсистемы (если есть). «Средняя наработка в сутки» — среднесуточная наработка за выбранный период, «Общая наработка» — суммарная наработка за выбранный период. Тренд показывает рост/снижение наработки по датам периода (по месяцам, если фильтр «Месяц» не выбран, иначе по суткам) — наведите на график, чтобы увидеть дату и значение. Кликните «Детали» справа, чтобы увидеть наработку по месяцам для конкретной машины (или сразу по дням, если в фильтрах уже выбран конкретный месяц) — из списка месяцев можно провалиться в наработку по дням.</p>
+      <div class="table-wrap table-wrap-fit">
+        <table id="dataTable" class="smh-table">
+          <thead>
+            <tr>
+              <th>Объект</th><th>Шахта</th><th>Модель</th><th>Борт</th><th>FS</th>
+              <th>TR ср./сутки</th><th>TR общая</th>
+              <th>DR1 ср./сутки</th><th>DR1 общая</th>
+              <th>DR2 ср./сутки</th><th>DR2 общая</th>
+              <th>Дата ввода</th><th>Возраст, лет</th>
+              <th>Тренд</th><th>Детали</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+      <div id="pagination" class="pagination"></div>
+    </section>
+  </main>
+  </div>
+
+  <div id="monthDetailModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h2 id="monthDetailModalTitle">Наработка по месяцам</h2>
+        <div>
+          <button id="monthDetailExportBtn" class="btn-secondary">⬇ Excel</button>
+          <button id="monthDetailModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <p class="hint-text">Кликните «Детали» у месяца, чтобы увидеть наработку по дням.</p>
+        <div class="table-wrap">
+          <table id="monthDetailTable">
+            <thead>
+              <tr>
+                <th>Месяц</th><th>TR общая</th><th>DR1 общая</th><th>DR2 общая</th><th>Записей</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="monthDetailTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="detailModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h2 id="detailModalTitle">Наработка по дням</h2>
+        <div>
+          <button id="detailExportBtn" class="btn-secondary">⬇ Excel</button>
+          <button id="detailModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="table-wrap">
+          <table id="detailTable">
+            <thead>
+              <tr>
+                <th>Дата</th><th>TR сутки</th><th>TR нараст.</th>
+                <th>DR1 сутки</th><th>DR1 нараст.</th>
+                <th>DR2 сутки</th><th>DR2 нараст.</th>
+              </tr>
+            </thead>
+            <tbody id="detailTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="trendTooltip" class="trend-tooltip" hidden></div>
+
+  <script type="module" src="smh-history.js?v=42"></script>
+</body>
+</html>

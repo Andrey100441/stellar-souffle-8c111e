@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Словарь разбора ремонтов</title>
+<link rel="stylesheet" href="style.css?v=102" />
+<style>
+  .pr-grid { display: grid; gap: 18px; }
+  .pr-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); }
+  .pr-card .table-toolbar { justify-content: space-between; }
+  .pr-card .hint-text { margin: 0 18px 12px; }
+  table.pr { table-layout: fixed; white-space: normal; font-size: 13px; }
+  table.pr th { background: #f2f2f2; color: var(--text); font-weight: 600; }
+  table.pr td, table.pr th { padding: 8px 10px; vertical-align: top; }
+  table.pr select, table.pr input[type="text"], table.pr textarea, .pr-inline select, .pr-inline input {
+    width: 100%; font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 7px; background: #fff; box-sizing: border-box;
+  }
+  table.pr textarea { min-height: 38px; resize: vertical; }
+  table.pr td.cat select { font-weight: 600; }
+  .pr-x { border: none; background: none; color: #b33; font-size: 18px; cursor: pointer; }
+  .pr-mv { border: 1px solid var(--border); background: #fff; border-radius: 6px; cursor: pointer; padding: 0 6px; }
+  .pr-add { margin: 10px 18px 16px; }
+  .pr-inline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 6px 18px 14px; font-size: 13px; }
+  .pr-inline select { width: auto; }
+  .pr-inline input[type="time"] { width: 110px; }
+  .switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; }
+  .switch input { width: 40px; height: 22px; accent-color: #2e9d4f; }
+  .switch[hidden] { display: none; }
+  .ai-row { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; padding: 12px 18px 16px; }
+  .ai-on { color: #2e7d32; } .ai-off { color: #999; }
+  .test-box { padding: 4px 18px 16px; display: grid; gap: 8px; }
+  .test-box textarea { width: 100%; min-height: 60px; font: inherit; padding: 8px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
+  .test-res { display: grid; gap: 6px; font-size: 13px; }
+  .test-res .r { display: grid; grid-template-columns: 130px 1fr; gap: 8px; padding: 6px 10px; background: #f7f8fa; border-radius: 7px; }
+  .test-res .why { color: #777; font-size: 12px; }
+  .site-card { border-color: #7a4a1e; }
+  .site-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px 18px 0; font-size: 13px; }
+  .site-row select { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 7px; background: #fff; }
+  #site { font-weight: 600; min-width: 240px; }
+  .site-row .sep { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
+  .site-state { font-size: 12px; color: #777; }
+  .file-btn { cursor: pointer; display: inline-flex; align-items: center; }
+  .badge-common { font-size: 11px; font-weight: 500; color: #777; background: #f2f2f2; border-radius: 10px; padding: 2px 8px; margin-left: 6px; }
+  .badge-site { font-size: 11px; font-weight: 500; color: #fff; background: #7a4a1e; border-radius: 10px; padding: 2px 8px; margin-left: 6px; }
+  .eo-head { margin: 4px 18px 0; font-weight: 600; font-size: 13px; }
+  .inherit-note { margin: 0 18px 12px; padding: 8px 12px; background: #fff4d6; border-radius: 7px; font-size: 13px; }
+  .pr-card.ro textarea, .pr-card.ro select, .pr-card.ro input { pointer-events: none; opacity: 0.6; }
+  .pr-card.ro .pr-add, .pr-card.ro .pr-x, .pr-card.ro .pr-mv { display: none; }
+  .xf-grid { display: grid; grid-template-columns: 130px 1fr; gap: 10px 12px; align-items: start; font-size: 13px; }
+  .xf-label { font-weight: 600; padding-top: 6px; }
+  .xf-grid select { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 7px; background: #fff; min-width: 240px; }
+  .xf-preview { margin-top: 14px; padding: 10px 12px; background: #f7f8fa; border-radius: 8px; font-size: 13px; max-height: 220px; overflow: auto; }
+  .xf-preview ul { margin: 4px 0 8px 18px; padding: 0; }
+  .xf-preview .none { color: #888; }
+  .repl-log { margin: 4px 18px 16px; }
+  .xf-grid input[type="date"] { font: inherit; padding: 5px 7px; border: 1px solid var(--border); border-radius: 7px; }
+  .warn { color: #b26a00; }
+  .dict-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+  .sf-list { columns: 3 260px; column-gap: 18px; padding: 4px 18px 10px; font-size: 13px; max-height: 420px; overflow: auto; }
+  .sf-list label { display: block; break-inside: avoid; padding: 3px 0; cursor: pointer; }
+  .sf-part { font-size: 12px; color: #b26a00; }
+  /* Раздел 7: таблицы по ширине страницы — доли столбцов, длинный текст «…» (полностью — в подсказке и по нажатию), кнопки переносятся. */
+  #tblDict td.vis, #tblDict th.vis { width: 92px; text-align: center; white-space: nowrap; }
+  #tblDict th.num, #tblDict td.uses { width: 130px; }
+  #tblDict th.act { width: 170px; }
+  /* Справочник из одного названия (типы работ, подсистемы, инициаторы): таблица по содержимому, а не на всю ширину. */
+  #tblDict.dict-plain { width: min(100%, 980px); }
+  #tblDict td, #tblDict th { overflow: hidden; overflow-wrap: anywhere; }
+  #tblDict thead th { max-width: none; } /* общий стиль страниц ограничивает заголовки 110 px — здесь ширины задают столбцы */
+  #tblDict td input[type="text"] { width: 100%; box-sizing: border-box; min-width: 0; }
+  #tblDict td.clip { white-space: nowrap; text-overflow: ellipsis; cursor: pointer; }
+  #tblDict td.clip.full { white-space: normal; }
+  #tblDict td.act { white-space: nowrap; }
+  #tblDict td.act .btn-small { margin: 0 4px 4px 0; }
+  #tblDict .combo { white-space: normal; }
+  #tblDict tr.dict-hidden td:not(.vis), #tblDict tr.dict-hidden input[type="text"] { color: #9a9a9a; }
+  /* Раздел 1: слова-триггеры фишками; пересечения между строками — мягкий жёлтый (читается в светлой и тёмной теме). */
+  .wchips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+  .wchip { font: inherit; letter-spacing: normal; padding: 1px 7px; border-radius: 10px; border: 1px solid var(--border); color: inherit; background: transparent; }
+  .wchip.ov { background: #fff3c4; border-color: #e3c25a; color: #5c4300; cursor: help; }
+  @media (prefers-color-scheme: dark) { .wchip.ov { background: rgba(250, 204, 21, 0.18); border-color: rgba(250, 204, 21, 0.55); color: #fde68a; } }
+  .wlegend .wchip { margin-right: 2px; }
+  .sf-mx-wrap { padding: 4px 18px 10px; }
+  .sf-mx-scroll { overflow: auto; max-height: 460px; border: 1px solid var(--border); border-radius: 8px; }
+  .sf-mx { font-size: 12.5px; border-collapse: separate; border-spacing: 0; }
+  .sf-mx th, .sf-mx td { text-align: center; padding: 4px 6px; white-space: nowrap; }
+  .sf-mx th { position: sticky; top: 0; background: #fdfaf6; z-index: 1; font-weight: 600; white-space: normal; min-width: 64px; max-width: 96px; line-height: 1.2; }
+  .sf-mx th { vertical-align: bottom; }
+  .sf-mx th .sf-col-all { display: block; margin: 5px auto 0; cursor: pointer; }
+  .sf-mx th small { display: block; font-weight: normal; color: #777; }
+  .sf-mx th:first-child, .sf-mx td:first-child { position: sticky; left: 0; background: #fff; text-align: left; z-index: 2; min-width: 220px; max-width: 300px; white-space: normal; }
+  .sf-mx th:first-child { background: #fdfaf6; z-index: 3; }
+  .sf-mx td.sf-added { background: #fff7e6; }
+  .sf-mx .sf-row-all { font-size: 11px; color: #777; margin-left: 4px; cursor: pointer; text-decoration: underline dotted; }
+  .dict-tabs .tab { border: 1px solid var(--border); background: #fff; border-radius: 7px; padding: 5px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+  .dict-tabs .tab.on { background: #7a4a1e; color: #fff; border-color: #7a4a1e; }
+  .uses { font-size: 12px; color: #777; }
+  .new-row td { background: #f3fbf4; }
+  .combo { display: inline-flex; align-items: center; gap: 4px; margin: 2px 8px 2px 0; font-size: 12px; white-space: nowrap; }
+  .pr-x:disabled { color: #ccc; cursor: not-allowed; }
+  .save-bar { position: sticky; bottom: 0; background: var(--panel); border-top: 1px solid var(--border); padding: 12px 24px; display: flex; gap: 10px; align-items: center; z-index: 5; }
+  .save-bar .dirty { color: #b26a00; font-size: 13px; }
+  .dict-status { margin: 0 18px 12px; font-size: 13px; }
+  .dict-status[hidden] { display: none; }
+  .row-save { margin-top: 6px; }
+  .pr-card.loading-sec { opacity: 0.5; pointer-events: none; }
+</style>
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Словарь разбора ремонтов</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Словарь разбора ремонтов</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+  <div id="errorBanner" class="error-banner" hidden></div>
+
+  <main id="prMain" hidden>
+    <div class="pr-grid">
+
+      <section class="pr-card site-card">
+        <div class="table-toolbar"><h2>Площадка</h2></div>
+        <div class="site-row">
+          <select id="site"></select>
+          <label class="switch" id="ownWrap"><input type="checkbox" id="ownRules" /> <span>Свои правила для этого рудника</span></label>
+          <span class="site-state" id="siteState"></span>
+        </div>
+        <div class="site-row">
+          <button class="btn-secondary" id="importBtn">Импорт с другой площадки…</button>
+          <button class="btn-secondary" id="exportBtn">Экспорт на другие площадки…</button>
+        </div>
+        <p class="hint-text">Правила ниже (периоды ЕО, слова, инициатор) действуют для выбранной площадки. Рудник без своих правил использует общие. Какие правила применить к работе, форма решает по руднику машины. ИИ и справочники — общие для всех площадок.</p>
+      </section>
+
+      <section class="pr-card">
+        <div class="table-toolbar"><h2>ИИ-разбор <span class="badge-common">общее для всех площадок</span></h2></div>
+        <div class="ai-row">
+          <label class="switch"><input type="checkbox" id="aiOn" checked /> <span id="aiLabel" class="ai-on">Включён</span></label>
+          <label>Модель
+            <select id="aiModel">
+              <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — быстрее</option>
+              <option value="claude-sonnet-5-5">Claude Sonnet 5.5 — точнее</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint-text">Выключено — форма раскладывает текст только по этому словарю, без ИИ. Включено — ИИ получает словарь как обязательные правила; тип работ, причина и инициатор по словарю всегда главнее ответа ИИ.</p>
+      </section>
+
+      <section class="pr-card site-sec">
+        <div class="table-toolbar"><h2>1. Тип работ <span class="badge-site"></span></h2></div>
+        <div class="inherit-note" hidden></div>
+        <div class="eo-head">Ежедневное обслуживание (ЕО) — до двух периодов в сутки</div>
+        <div id="eoRows"></div>
+        <p class="hint-text">Время и слова равноценны: тип ставится по словам ниже (порядок строк — приоритет, стрелки меняют порядок). Если слов типа в тексте нет, а работа открыта в периоде ЕО, — ставится тип периода ЕО. Слово от 8 букв с одной опечаткой тоже засчитывается («перключается» = «переключается»).</p>
+        <p class="hint-text wlegend"><span class="wchip ov">слово</span> — слово (или его форма) есть в нескольких строках раздела; наведите, чтобы увидеть где.</p>
+        <table class="pr" id="tblType">
+          <colgroup><col style="width:28%" /><col /><col style="width:74px" /></colgroup>
+          <thead><tr><th>Категория (тип работ)</th><th>Слова-триггеры и сокращения (через запятую)</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button class="btn-secondary pr-add" data-add="type">+ Строка</button>
+        <p class="hint-text">Вне периодов ЕО и без слов из таблицы тип не подставляется — его выберет ИИ по смыслу текста или пользователь.</p>
+      </section>
+
+      <section class="pr-card" id="sfCard">
+        <div class="table-toolbar"><h2>2. Отказы подсистем <span class="badge-common">общее для всех площадок</span></h2></div>
+        <p class="hint-text">Какие отказы можно выбрать у подсистемы — в форме ввода и в разделе 3. Сохранение добавит отмеченные отказы в шаблоны всех моделей, где есть эта подсистема (аварийные и плановые работы), и уберёт неотмеченные. Исключения по отдельным машинам и записанные работы не меняются.</p>
+        <div class="pr-inline">Подсистема <select id="sfSub"></select> <span class="site-state" id="sfInfo"></span></div>
+        <div class="pr-inline"><input type="text" id="sfFilter" placeholder="Найти отказ" style="max-width:260px" /> <label class="combo"><input type="checkbox" id="sfOnlyOn" /> только отмеченные</label></div>
+        <div class="sf-list" id="sfList"></div>
+        <div class="pr-inline"><input type="text" id="sfNew" placeholder="Новый отказ (если нет в списке)" style="max-width:300px" /> <button class="btn-secondary" id="sfAdd">+ Добавить в справочник</button></div>
+        <div class="sf-mx-wrap" id="sfMxWrap" hidden>
+          <div class="eo-head" style="margin:0 0 6px">Отмеченные отказы по типам машин <select id="sfAddType" title="Добавить столбец — тип машины, у моделей которого этой подсистемы пока нет"></select></div>
+          <div class="sf-mx-scroll"><table class="pr sf-mx" id="sfMx"></table></div>
+          <p class="hint-text" id="sfMxNote" style="margin:6px 0 0;padding:0"></p>
+        </div>
+        <div class="pr-inline"><button class="btn-primary" id="sfSave" disabled>Сохранить список</button> <button class="btn-secondary" id="sfReset">Отменить изменения</button></div>
+        <div class="dict-status login-message" id="sfStatus" hidden></div>
+        <div class="repl-log">
+          <div class="eo-head" style="margin:0 0 6px">Журнал списков отказов</div>
+          <table class="pr" id="tblSf">
+            <thead><tr><th style="width:16%">Когда</th><th>Подсистема</th><th style="width:22%">Строк шаблонов (+ / −)</th><th style="width:130px"></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="pr-card site-sec">
+        <div class="table-toolbar"><h2>3. Подсистема и отказ <span class="badge-site"></span></h2></div>
+        <div class="inherit-note" hidden></div>
+        <p class="hint-text">Отказ можно не выбирать — тогда его выберет ИИ или пользователь. Правило срабатывает, только если такая подсистема есть в шаблоне модели машины.</p>
+        <p class="hint-text wlegend"><span class="wchip ov">слово</span> — слово (или его форма) есть в нескольких строках раздела; наведите, чтобы увидеть где.</p>
+        <table class="pr" id="tblSub">
+          <colgroup><col style="width:22%" /><col style="width:22%" /><col /><col style="width:40px" /></colgroup>
+          <thead><tr><th>Подсистема</th><th>Отказ (необязательно)</th><th>Слова-триггеры (через запятую)</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button class="btn-secondary pr-add" data-add="sub">+ Строка</button>
+      </section>
+
+      <section class="pr-card site-sec">
+        <div class="table-toolbar"><h2>4. Причина <span class="badge-site"></span></h2></div>
+        <div class="inherit-note" hidden></div>
+        <table class="pr" id="tblReason">
+          <colgroup><col style="width:28%" /><col /><col style="width:40px" /></colgroup>
+          <thead><tr><th>Причина</th><th>Слова-триггеры (через запятую)</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button class="btn-secondary pr-add" data-add="reason">+ Строка</button>
+      </section>
+
+      <section class="pr-card site-sec">
+        <div class="table-toolbar"><h2>5. Инициатор по типу работ и причине <span class="badge-site"></span></h2></div>
+        <div class="inherit-note" hidden></div>
+        <p class="hint-text">В списке «Инициатор» — только варианты, разрешённые правилами базы для выбранных типа и причины.</p>
+        <table class="pr" id="tblDmg">
+          <colgroup><col style="width:32%" /><col style="width:32%" /><col /><col style="width:40px" /></colgroup>
+          <thead><tr><th>Тип работ</th><th>Причина</th><th>Инициатор</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button class="btn-secondary pr-add" data-add="dmg">+ Строка</button>
+      </section>
+
+      <section class="pr-card site-sec">
+        <div class="table-toolbar"><h2>6. Модели техники <span class="badge-site"></span></h2></div>
+        <div class="inherit-note" hidden></div>
+        <p class="hint-text">Как пишут модель или марку русскими буквами и сокращениями: «камацу» = KOMATSU. Можно указать марку целиком (KOMATSU — все её модели) или конкретную модель. Форма ввода и ИИ ищут машину по борту среди моделей, названных в тексте.</p>
+        <table class="pr" id="tblModel">
+          <colgroup><col style="width:28%" /><col /><col style="width:40px" /></colgroup>
+          <thead><tr><th>Модель или марка (как в справочнике техники)</th><th>Слова-триггеры (через запятую)</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <datalist id="modelList"></datalist>
+        <button class="btn-secondary pr-add" data-add="model">+ Строка</button>
+      </section>
+
+      <section class="pr-card">
+        <div class="table-toolbar"><h2>7. Справочники <span class="badge-common">общее для всех площадок</span></h2>
+          <div class="dict-tabs" id="dictTabs">
+            <button class="tab on" data-dict="types">Типы работ</button><button class="tab" data-dict="subs">Подсистемы</button><button class="tab" data-dict="fails">Отказы</button><button class="tab" data-dict="reasons">Причины</button><button class="tab" data-dict="damages">Инициаторы</button>
+          </div>
+        </div>
+        <p class="hint-text" id="dictHint"></p>
+        <p class="hint-text" style="margin-top:-4px">Галочка «В форме»: снятая скрывает значение из формы ввода и подсказок ИИ; в истории и отчётах оно остаётся.</p>
+        <table class="pr" id="tblDict">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+        <div class="pr-inline" id="dictAddRow"><input type="text" id="dictNewName" placeholder="Название нового значения" style="max-width:360px" /> <button class="btn-secondary" id="dictAdd">+ Добавить</button></div>
+        <div class="dict-status login-message" id="dictStatus" hidden></div>
+        <div class="repl-log">
+          <div class="eo-head" style="margin:0 0 6px">Журнал замен</div>
+          <table class="pr" id="tblRepl" style="margin-bottom:14px">
+            <thead><tr><th style="width:14%">Когда</th><th>Замена</th><th style="width:13%">Площадка</th><th style="width:15%">Период</th><th style="width:16%">Изменено</th><th style="width:110px"></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="eo-head" style="margin:0 0 6px">Журнал изменений справочников</div>
+          <table class="pr" id="tblLog">
+            <thead><tr><th style="width:16%">Когда</th><th style="width:16%">Справочник</th><th style="width:16%">Действие</th><th>Было → стало</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="pr-card">
+        <div class="table-toolbar"><h2>Проверить текст</h2></div>
+        <div class="test-box">
+          <textarea id="testText" placeholder="Например: не поднимается ковш, низкое давление гидравлики, износ"></textarea>
+          <div class="pr-inline" style="margin:0">Рудник машины <select id="testSite"></select> работа открыта в <input type="time" id="testTime" value="10:30" /> <button class="btn-primary" id="testBtn">Проверить</button></div>
+          <div class="test-res" id="testRes"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="save-bar" id="saveBar" hidden>
+    <button class="btn-primary" id="saveBtn">Сохранить правила</button>
+    <button class="btn-secondary" id="resetBtn">Отменить изменения</button>
+    <span class="dirty" id="dirty" hidden>Есть несохранённые изменения</span>
+  </div>
+
+  <div id="xferModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h2 id="xferTitle">Импорт правил</h2>
+        <button id="xferClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px;">
+        <div class="xf-grid">
+          <div class="xf-label">Откуда</div><div id="xferFrom"></div>
+          <div class="xf-label">Куда</div><div id="xferTo"></div>
+          <div class="xf-label">Что переносить</div>
+          <div id="xferParts">
+            <label class="combo"><input type="checkbox" value="eo" checked /> Периоды ЕО</label>
+            <label class="combo"><input type="checkbox" value="type" checked /> Слова: тип работ</label>
+            <label class="combo"><input type="checkbox" value="sub" checked /> Подсистема и отказ</label>
+            <label class="combo"><input type="checkbox" value="reason" checked /> Причина</label>
+            <label class="combo"><input type="checkbox" value="dmg" checked /> Инициатор</label>
+            <label class="combo"><input type="checkbox" value="model" checked /> Модели техники</label>
+          </div>
+          <div class="xf-label">Режим</div>
+          <div>
+            <label class="combo"><input type="radio" name="xferMode" value="replace" checked /> Заменить</label>
+            <label class="combo"><input type="radio" name="xferMode" value="merge" /> Дополнить — добавить недостающие слова и строки, ничего не удалять (периоды ЕО, если отмечены, заменяются)</label>
+          </div>
+        </div>
+        <div class="xf-preview" id="xferPreview"></div>
+        <div class="modal-form-actions" style="margin-top: 14px;">
+          <button type="button" id="xferCancel" class="btn-secondary">Отмена</button>
+          <button type="button" id="xferOk" class="btn-primary">Применить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="replModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h2 id="replTitle">Заменить значение</h2>
+        <button id="replClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px;">
+        <div class="xf-grid">
+          <div class="xf-label">Заменить</div><div id="replFrom"></div>
+          <div class="xf-label">На</div><div><select id="replTo"></select> <input type="text" id="replNew" placeholder="Название нового значения" hidden style="font:inherit;padding:6px 8px;border:1px solid var(--border);border-radius:7px;min-width:240px" /></div>
+          <div class="xf-label">Площадка</div><div><select id="replSite"></select></div>
+          <div class="xf-label">Период работ</div>
+          <div>с <input type="date" id="replD1" /> по <input type="date" id="replD2" /> <span class="uses">пусто — все данные</span></div>
+          <div class="xf-label">Также</div>
+          <div><label class="combo"><input type="checkbox" id="replRules" checked /> заменить и в правилах этой площадки (слова, периоды ЕО, инициатор)</label></div>
+        </div>
+        <div class="xf-preview" id="replPreview"></div>
+        <label class="combo" style="margin-top:10px"><input type="checkbox" id="replAgree" /> Понимаю, что цифры в отчётах за эти месяцы изменятся</label>
+        <div class="dict-status login-message" id="replStatus" hidden></div>
+        <div class="modal-form-actions" style="margin-top: 14px;">
+          <button type="button" id="replCancel" class="btn-secondary">Отмена</button>
+          <button type="button" id="replOk" class="btn-primary" disabled>Заменить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <script type="module" src="parse-rules.js?v=26"></script>
+</body>
+</html>

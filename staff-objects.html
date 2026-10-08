@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Персонал по объектам</title>
+<link rel="stylesheet" href="style.css?v=105" />
+<style>
+.so-filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.so-filters select, .so-filters input[type=search] { padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; }
+.so-chk { font-size: 13px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.so-tag { display: inline-block; margin: 2px 4px 2px 0; padding: 2px 8px; border-radius: 6px; background: #eef1f4; font-size: 12.5px; white-space: nowrap; }
+.so-tag.home { background: #fbefd6; }
+#dataTable th[data-sort] { cursor: pointer; }
+#dataTable .num { text-align: right; }
+</style>
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Персонал по объектам</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Персонал по объектам</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+  <div class="period-toggle-bar">
+    <span class="period-toggle-label">Период</span>
+    <div class="period-toggle" id="periodToggle"></div>
+  </div>
+
+  <div id="errorBanner" class="error-banner" hidden></div>
+
+  <main>
+    <nav id="crumbs" aria-label="Связанные формы"></nav>
+    <section class="table-section">
+      <div class="table-toolbar">
+        <h2>Персонал по объектам</h2>
+        <div class="so-filters">
+          <select id="fObject" aria-label="Объект"><option value="">Все объекты</option></select>
+          <select id="fMine" aria-label="Рудник"><option value="">Все рудники</option></select>
+          <input type="search" id="fSearch" placeholder="Фамилия" aria-label="Поиск по фамилии" />
+          <label class="so-chk"><input type="checkbox" id="fMulti" /> только работавшие на нескольких объектах</label>
+        </div>
+      </div>
+      <p class="hint-text">На каких объектах и рудниках работал каждый сотрудник: нарядов, часов и период работы за выбранный период (по дате начала наряда) — по журналу персонала (laibour_summ). «Основной рудник» — где у сотрудника больше всего часов; по нему форма ввода ремонтов показывает людей в первую очередь. Клик по заголовку столбца — сортировка.</p>
+      <div id="summary" class="hint-text"></div>
+      <div class="table-wrap">
+        <table id="dataTable" class="equipment-table">
+          <thead>
+            <tr>
+              <th data-sort="famaly">Сотрудник</th><th data-sort="pos">Должность</th><th data-sort="organization">Организация</th>
+              <th data-sort="home_mine">Основной рудник</th><th>Объекты и рудники (часы · наряды)</th>
+              <th data-sort="nObj" class="num">Объектов</th><th data-sort="orders" class="num">Нарядов</th><th data-sort="hours" class="num">Часов</th><th data-sort="last_day">Период</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <script type="module" src="staff-objects.js?v=16"></script>
+</body>
+</html>

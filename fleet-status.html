@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Состояние парка оборудования</title>
+<link rel="stylesheet" href="style.css?v=102" />
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Состояние парка оборудования</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Состояние парка оборудования</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+      <button id="filterToggle" class="btn-icon" aria-label="Фильтры">☰ Фильтры</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <div class="period-toggle-bar">
+    <span class="period-toggle-label">Период</span>
+    <div class="period-toggle" id="periodToggle"></div>
+  </div>
+
+  <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+  <div id="errorBanner" class="error-banner" hidden></div>
+
+  <aside id="filterPanel" class="filters">
+    <div class="filter-group">
+      <label for="filterObject">Объект</label>
+      <select id="filterObject"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterMine">Шахта</label>
+      <select id="filterMine"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterModel">Модель</label>
+      <select id="filterModel"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterCode">Борт / код</label>
+      <select id="filterCode"><option value="">Все</option></select>
+    </div>
+    <div class="filter-actions">
+      <button id="resetFilters" class="btn-secondary">Сбросить</button>
+    </div>
+  </aside>
+
+  <main>
+    <section class="summary" id="summaryCards"></section>
+
+    <section class="table-section table-section-fit">
+      <div class="table-toolbar">
+        <h2 id="tableTitle">Парк оборудования</h2>
+        <div class="export-buttons">
+          <button id="exportExcel" class="btn-secondary">⬇ Excel</button>
+        </div>
+      </div>
+      <p class="hint-text hint-text-spaced">Рейтинг — 5 критериев за период (Г — готовность/КТГ, Н — надёжность/MTBF, Р — ремонт/MTTR, С — сервис/КТГ сервиса, Э — экономика/бюджет) против плановых показателей этой машины; клик — детализация в «Доступность и надёжность». Тренд надёжности (Кроу-АМСАА) — накопленные аварийные отказы по наработке; β&nbsp;&gt;&nbsp;1,2 — отказы учащаются, β&nbsp;&lt;&nbsp;0,8 — становятся реже. Сигналы — 🔁 повторные отказы (после ТО или ремонта той же подсистемы — окно настраивается по машине в «Оборудование → Изменить»; серое «⚙ не настроено» — окно не задано), ⚙ доля самой частой подсистемы среди отказов. Время простоя — по типам, клик по сектору открывает «Журнал ремонтов» с фильтром. Инициатор — доля часов по вине рудника/сервиса. Бюджет запчастей — факт к плану за период (чёрная черта — 100% плана), стоимость моточаса. Затраты по месяцам — серые столбики — запчасти на плановые/ТО, красные — на аварийные (ярко-красный — месяц сверх плана), пунктир — месячный план.</p>
+      <div class="legend" id="pageLegend"></div>
+      <div class="table-wrap table-wrap-fit">
+        <table id="dataTable" class="fleet-table">
+          <thead>
+            <tr>
+              <th>Объект</th><th>Шахта</th><th>Модель</th><th>Борт</th>
+              <th>Возраст<br><small>дата ввода/лет</small></th>
+              <th id="ratingHeader">Рейтинг</th><th>Тренд надёжности</th><th>Сигналы</th>
+              <th>Время простоя</th><th>Инициатор</th>
+              <th class="money-th">Бюджет запчастей</th><th class="money-th">Затраты по месяцам</th>
+              <th>Наработка<br><small>период/общая</small></th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+      <div id="pagination" class="pagination"></div>
+    </section>
+  </main>
+  </div>
+
+  <div id="barTooltip" class="trend-tooltip" hidden></div>
+
+  <script type="module" src="fleet-status.js?v=59"></script>
+</body>
+</html>

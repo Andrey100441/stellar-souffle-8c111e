@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Плановые показатели оборудования</title>
+<link rel="stylesheet" href="style.css?v=105" />
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>Плановые показатели оборудования</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>Плановые показатели оборудования</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+      <button id="filterToggle" class="btn-icon" aria-label="Фильтры">☰ Фильтры</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+  <div id="errorBanner" class="error-banner" hidden></div>
+
+  <aside id="filterPanel" class="filters">
+    <div class="filter-group">
+      <label for="filterYear">Год</label>
+      <select id="filterYear"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterMonth">Месяц</label>
+      <select id="filterMonth"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterObject">Объект</label>
+      <select id="filterObject"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterMine">Шахта</label>
+      <select id="filterMine"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterModel">Модель</label>
+      <select id="filterModel"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterCode">Борт / код</label>
+      <select id="filterCode"><option value="">Все</option></select>
+    </div>
+    <div class="filter-actions">
+      <button id="resetFilters" class="btn-secondary">Сбросить</button>
+    </div>
+  </aside>
+
+  <main>
+    <nav id="crumbs" aria-label="Связанные формы"></nav>
+    <section class="summary" id="summaryCards"></section>
+
+    <section class="table-section table-section-fit">
+      <div class="table-toolbar">
+        <h2>План по месяцам</h2>
+        <div class="export-buttons">
+          <button id="addPlanBtn" class="btn-primary">+ Заполнить показатели</button>
+          <button id="downloadTemplateBtn" class="btn-secondary">⬇ Скачать образец</button>
+          <button id="excelImportBtn" class="btn-secondary">⬆ Загрузить из Excel</button>
+          <input type="file" id="excelFileInput" accept=".xlsx,.xls" hidden />
+        </div>
+      </div>
+      <p class="hint-text" id="hintText"></p>
+      <div class="table-wrap table-wrap-fit">
+        <table id="dataTable" class="plan-table">
+          <thead>
+            <tr>
+              <th>Борт</th><th>Модель</th><th>Шахта</th><th>Объект</th><th>Период</th>
+              <th>SMH план</th><th>Бюджет</th><th>Дост. план</th><th>MTBF план</th><th>MTTR план</th><th>Cost/ч</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <div id="planModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h2 id="planModalTitle">Заполнить показатели</h2>
+        <button id="planModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="planForm" class="equipment-form">
+          <div class="filter-group">
+            <label for="pfObject">Объект *</label>
+            <select id="pfObject" required><option value="">Выберите</option></select>
+          </div>
+          <div class="filter-group">
+            <label for="pfMine">Шахта *</label>
+            <select id="pfMine" required><option value="">Выберите</option></select>
+          </div>
+          <div class="filter-group">
+            <label for="pfModel">Модель *</label>
+            <select id="pfModel" required><option value="">Выберите</option></select>
+          </div>
+          <div class="filter-group">
+            <label for="pfCode">Борт / код *</label>
+            <select id="pfCode" required><option value="">Выберите</option></select>
+          </div>
+          <div class="filter-group">
+            <label for="pfYear">Год *</label>
+            <select id="pfYear" required></select>
+          </div>
+          <div class="filter-group">
+            <label for="pfMonth">Месяц *</label>
+            <select id="pfMonth" required>
+              <option value="1">Январь</option><option value="2">Февраль</option>
+              <option value="3">Март</option><option value="4">Апрель</option>
+              <option value="5">Май</option><option value="6">Июнь</option>
+              <option value="7">Июль</option><option value="8">Август</option>
+              <option value="9">Сентябрь</option><option value="10">Октябрь</option>
+              <option value="11">Ноябрь</option><option value="12">Декабрь</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="pfSmh">SMH план (часы)</label>
+            <input type="number" step="any" id="pfSmh" />
+          </div>
+          <div class="filter-group">
+            <label for="pfBudget">Бюджет</label>
+            <input type="number" step="any" id="pfBudget" />
+          </div>
+          <div class="filter-group">
+            <label for="pfAvailability">Доступность план (0–1, напр. 0.8 = 80%)</label>
+            <input type="number" step="any" min="0" max="1" id="pfAvailability" />
+          </div>
+          <div class="filter-group">
+            <label for="pfMtbf">MTBF план (ч)</label>
+            <input type="number" step="1" id="pfMtbf" />
+          </div>
+          <div class="filter-group">
+            <label for="pfMttr">MTTR план (ч)</label>
+            <input type="number" step="1" id="pfMttr" />
+          </div>
+          <div class="filter-group">
+            <label for="pfCostPerHour">Стоимость часа</label>
+            <input type="number" step="any" id="pfCostPerHour" />
+          </div>
+          <div class="modal-form-actions">
+            <button type="button" id="planCancelBtn" class="btn-secondary">Отмена</button>
+            <button type="submit" class="btn-primary">Сохранить</button>
+          </div>
+          <div id="planFormError" class="error-banner" hidden></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="importModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-narrow">
+      <div class="modal-header">
+        <h2>Импорт из Excel</h2>
+        <button id="importModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="importSummary" style="padding: 16px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="plan-indicators.js?v=45"></script>
+</body>
+</html>

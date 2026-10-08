@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>История ТО</title>
+<link rel="stylesheet" href="style.css?v=105" />
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>История ТО</h1>
+      <p class="login-sub">Вход по коду с почты — без пароля</p>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <button type="submit" class="btn-primary" id="loginSubmit">Отправить код</button>
+      </form>
+      <form id="codeForm" hidden>
+        <input type="text" id="loginCode" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" />
+        <button type="submit" class="btn-primary" id="codeSubmit">Подтвердить</button>
+        <button type="button" class="btn-secondary" id="backToEmail">Назад</button>
+      </form>
+      <div id="loginMessage" class="login-message" hidden></div>
+    </div>
+  </div>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <h1>История ТО</h1>
+    <div class="topbar-right">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="btn-secondary">Выйти</button>
+      <button id="filterToggle" class="btn-icon" aria-label="Фильтры">☰ Фильтры</button>
+    </div>
+  </header>
+  <nav id="navTabs" class="nav-tabs"></nav>
+
+  <div id="loadingIndicator" class="loading">Загрузка данных…</div>
+  <div id="errorBanner" class="error-banner" hidden></div>
+
+  <aside id="filterPanel" class="filters">
+    <div class="filter-group">
+      <label for="filterFrom">Дата с</label>
+      <input type="date" id="filterFrom" />
+    </div>
+    <div class="filter-group">
+      <label for="filterTo">Дата по</label>
+      <input type="date" id="filterTo" />
+    </div>
+    <div class="filter-group">
+      <label for="filterObject">Объект</label>
+      <select id="filterObject"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterMine">Шахта</label>
+      <select id="filterMine"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterModel">Модель</label>
+      <select id="filterModel"><option value="">Все</option></select>
+    </div>
+    <div class="filter-group">
+      <label for="filterCode">Борт / код</label>
+      <select id="filterCode"><option value="">Все</option></select>
+    </div>
+    <div class="filter-actions">
+      <button id="resetFilters" class="btn-secondary">Сбросить</button>
+    </div>
+  </aside>
+
+  <main>
+    <nav id="crumbs" aria-label="Связанные формы"></nav>
+    <section class="summary" id="summaryCards"></section>
+
+    <section class="table-section table-section-fit">
+      <div class="table-toolbar">
+        <h2>История выполненных ТО</h2>
+        <div class="export-buttons">
+          <button id="exportExcel" class="btn-secondary">⬇ Excel</button>
+        </div>
+      </div>
+      <p class="hint-text hint-text-spaced">Для каждого выполненного ТО показана фактическая наработка с прошлого ТО в сравнении с плановым шагом ("Шаг ТО"). Данные, где ТО сделано позже плана, выделены красным. Данные, где ТО сделано раньше плана, выделены синим. Кликните по карточке выше, чтобы отфильтровать таблицу по категории (повторный клик снимает фильтр).</p>
+      <div class="table-wrap table-wrap-fit">
+        <table id="dataTable" class="pm-history-table">
+          <thead>
+            <tr>
+              <th>Дата ТО</th><th>Время ремонта</th><th>Объект</th><th>Шахта</th>
+              <th>Модель</th><th>Борт</th><th>FS</th><th>Тип ТО</th><th>Шаг цикла</th>
+              <th>Разница Ф/П</th><th>Время работы</th><th>Стоимость ремонта</th><th>Комментарии</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+      <div id="pagination" class="pagination"></div>
+    </section>
+  </main>
+  </div>
+
+  <div id="staffModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-narrow">
+      <div class="modal-header">
+        <h2 id="staffModalTitle">Персонал по наряду</h2>
+        <button id="staffModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="table-wrap">
+          <table id="staffTable">
+            <thead><tr><th>ФИО</th><th>Время работы, ч</th></tr></thead>
+            <tbody id="staffTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="costModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h2 id="costModalTitle">Запасные части по наряду</h2>
+        <button id="costModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="table-wrap">
+          <table id="costTable">
+            <thead><tr><th>Номенклатура</th><th>Индекс</th><th>Кол-во</th><th>Стоимость</th></tr></thead>
+            <tbody id="costTableBody"></tbody>
+            <tfoot id="costTableFoot"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="diffModal" class="modal-overlay" hidden>
+    <div class="modal-card modal-narrow">
+      <div class="modal-header">
+        <h2>Детали ТО</h2>
+        <button id="diffModalClose" class="btn-icon" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="table-wrap">
+          <table id="diffTable">
+            <tbody id="diffTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="pm-history.js?v=38"></script>
+</body>
+</html>

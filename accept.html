@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://xdegfnbinprrfoxpcvpf.supabase.co wss://xdegfnbinprrfoxpcvpf.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="referrer" content="no-referrer" />
+<title>Принять приглашение</title>
+<link rel="stylesheet" href="style.css?v=102" />
+</head>
+<body>
+  <div class="login-screen">
+    <div class="login-card">
+      <h1>Приглашение в систему</h1>
+      <p class="login-sub" id="acceptSub">Администратор открыл вам доступ к аналитике техники.</p>
+
+      <div id="linkBlock" class="pair-stack" hidden>
+        <button type="button" class="btn-primary" id="acceptBtn">Принять приглашение и войти</button>
+      </div>
+
+      <form id="codeBlock" class="pair-stack" hidden>
+        <p class="hint-text pair-left">Или введите почту и 6-значный код из письма-приглашения:</p>
+        <input type="email" id="acceptEmail" class="pair-input" placeholder="you@example.com" required autocomplete="email" />
+        <input type="text" id="acceptCode" class="pair-input pair-code" placeholder="Код из письма" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" required />
+        <button type="submit" class="btn-secondary" id="acceptCodeBtn">Принять по коду</button>
+      </form>
+
+      <div id="acceptMessage" class="login-message" hidden></div>
+      <p class="pair-foot"><a href="index.html">Обычный вход по коду с почты</a></p>
+    </div>
+  </div>
+  <script type="module" src="accept.js?v=6"></script>
+</body>
+</html>
