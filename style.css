@@ -1259,6 +1259,10 @@ svg.chart text { font: 10px "Segoe UI", Arial, sans-serif; fill: #888; }
 .user-menu-btn:hover { border-color: var(--border); background: #fff; }
 .user-menu-dd { left: auto; right: 0; min-width: 180px; }
 .user-menu-item { background: none; border: none; text-align: left; font: inherit; cursor: pointer; width: 100%; }
+/* «Выйти» — это <button>: без этого он берёт цвет шапки (на тёмной шапке формы ремонтов почти не виден
+   на белом меню) и размер шрифта страницы. Делаем как у ссылки «Мои устройства». */
+.user-menu-dd .user-menu-item { -webkit-appearance: none; appearance: none; color: var(--text); font-size: 13.5px; font-weight: 400; }
+.user-menu-dd .user-menu-item:hover { background: #f0f1f4; }
 
 /* Локация в шапке (auth.js) — как метка «объект · шахта» в форме «Ввод ремонтов» */
 .app-scope { display: flex; align-items: center; margin-left: auto; margin-right: 12px; min-width: 0; }
